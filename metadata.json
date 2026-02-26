@@ -1,0 +1,5 @@
+{
+  "name": "Wanderlust Elite",
+  "description": "A premium travel and tourism platform featuring AI-powered itinerary planning and curated global destinations.",
+  "requestFramePermissions": ["geolocation"]
+}
