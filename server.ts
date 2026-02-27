@@ -15,6 +15,11 @@ async function startServer() {
 
   app.use(express.json());
 
+  // Health Check
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", mode: process.env.NODE_ENV || "development" });
+  });
+
   // API Routes
   app.post("/api/create-checkout-session", async (req, res) => {
     if (!stripe) {

@@ -13,6 +13,15 @@ const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
 const Navbar = ({ onBookClick }: { onBookClick: () => void }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showDeployGuide, setShowDeployGuide] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [tempKey, setTempKey] = useState(localStorage.getItem('WANDERLUST_API_KEY') || '');
+
+  const saveKey = () => {
+    localStorage.setItem('WANDERLUST_API_KEY', tempKey);
+    setShowSettings(false);
+    window.location.reload(); // Reload to apply the new key
+  };
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -21,122 +30,255 @@ const Navbar = ({ onBookClick }: { onBookClick: () => void }) => {
   }, []);
 
   return (
-    <nav className={cn(
-      "fixed top-0 left-0 right-0 z-50 transition-all duration-500 px-6 py-4",
-      isScrolled ? "bg-white/80 backdrop-blur-lg shadow-sm" : "bg-transparent"
-    )}>
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Globe className={cn("w-8 h-8 transition-colors", isScrolled ? "text-ink" : "text-white")} />
-          <span className={cn("text-2xl font-serif font-bold tracking-tight transition-colors", isScrolled ? "text-ink" : "text-white")}>
-            WANDERLUST
-          </span>
-        </div>
+    <>
+      <nav className={cn(
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-500 px-6 py-4",
+        isScrolled ? "bg-white/90 backdrop-blur-lg shadow-sm" : "bg-transparent"
+      )}>
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Globe className={cn("w-8 h-8 transition-colors", isScrolled ? "text-ink" : "text-white")} />
+            <span className={cn("text-2xl font-display font-bold tracking-tight transition-colors", isScrolled ? "text-ink" : "text-white")}>
+              WANDERLUST
+            </span>
+          </div>
 
-        <div className="hidden md:flex items-center gap-8">
-          {['Destinations', 'Experiences', 'AI Planner', 'Journal'].map((item) => (
-            <a 
-              key={item} 
-              href={`#${item.toLowerCase().replace(' ', '-')}`}
+          <div className="hidden md:flex items-center gap-8">
+            {['Destinations', 'Experiences', 'AI Planner', 'Journal'].map((item) => (
+              <a 
+                key={item} 
+                href={`#${item.toLowerCase().replace(' ', '-')}`}
+                className={cn(
+                  "text-[10px] font-bold uppercase tracking-[0.2em] hover:text-gold transition-colors",
+                  isScrolled ? "text-ink" : "text-white"
+                )}
+              >
+                {item}
+              </a>
+            ))}
+            <button 
+              onClick={() => setShowSettings(true)}
               className={cn(
-                "text-sm font-medium uppercase tracking-widest hover:opacity-60 transition-opacity",
-                isScrolled ? "text-ink" : "text-white"
+                "p-2 rounded-full transition-all",
+                isScrolled ? "text-ink hover:bg-gray-100" : "text-white hover:bg-white/10"
+              )}
+              title="API Settings"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={() => setShowDeployGuide(true)}
+              className={cn(
+                "text-[10px] font-bold uppercase tracking-[0.2em] border px-4 py-2 rounded-full transition-all cursor-pointer",
+                isScrolled ? "border-ink text-ink hover:bg-ink hover:text-white" : "border-white/40 text-white hover:bg-white hover:text-ink"
               )}
             >
-              {item}
-            </a>
-          ))}
+              Deploy Guide
+            </button>
+            <button 
+              onClick={onBookClick}
+              className={cn(
+                "px-8 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all cursor-pointer shadow-lg",
+                isScrolled ? "bg-ink text-white hover:bg-gold" : "bg-white text-ink hover:bg-gold hover:text-white"
+              )}
+            >
+              Book Now
+            </button>
+          </div>
+
           <button 
-            onClick={onBookClick}
-            className={cn(
-              "px-6 py-2 rounded-full text-sm font-medium transition-all cursor-pointer",
-              isScrolled ? "bg-ink text-white" : "bg-white text-ink"
-            )}
+            className="md:hidden"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            Book Now
+            {isMobileMenuOpen ? <X className="text-ink" /> : <Menu className={isScrolled ? "text-ink" : "text-white"} />}
           </button>
         </div>
 
-        <button 
-          className="md:hidden"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          {isMobileMenuOpen ? <X className="text-ink" /> : <Menu className={isScrolled ? "text-ink" : "text-white"} />}
-        </button>
-      </div>
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="absolute top-full left-0 right-0 bg-white p-6 shadow-xl md:hidden flex flex-col gap-4"
+            >
+              {['Destinations', 'Experiences', 'AI Planner', 'Journal'].map((item) => (
+                <a key={item} href={`#${item.toLowerCase().replace(' ', '-')}`} onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-serif border-b border-gray-100 pb-2">{item}</a>
+              ))}
+              <button 
+                onClick={() => {
+                  onBookClick();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="bg-ink text-white py-4 rounded-xl font-bold uppercase tracking-widest text-xs"
+              >
+                Book Your Escape
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </nav>
 
       <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="absolute top-full left-0 right-0 bg-white p-6 shadow-xl md:hidden flex flex-col gap-4"
-          >
-            {['Destinations', 'Experiences', 'AI Planner', 'Journal'].map((item) => (
-              <a key={item} href={`#${item.toLowerCase().replace(' ', '-')}`} onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-serif border-b border-gray-100 pb-2">{item}</a>
-            ))}
-            <button 
-              onClick={() => {
-                onBookClick();
-                setIsMobileMenuOpen(false);
-              }}
-              className="bg-ink text-white py-4 rounded-xl font-bold uppercase tracking-widest text-xs"
+        {showSettings && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center px-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSettings(false)}
+              className="absolute inset-0 bg-ink/80 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative bg-white w-full max-w-md rounded-[2.5rem] overflow-hidden shadow-2xl p-10"
             >
-              Book Your Escape
-            </button>
-          </motion.div>
+              <h2 className="text-3xl mb-4 font-display">AI <span className="italic font-light">Settings</span></h2>
+              <p className="text-sm text-gray-500 mb-6">Enter your Gemini API Key to enable the AI Travel Concierge. This is stored locally in your browser.</p>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Gemini API Key</label>
+                  <input 
+                    type="password"
+                    placeholder="Paste your key here..."
+                    className="w-full border border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:border-gold transition-all"
+                    value={tempKey}
+                    onChange={(e) => setTempKey(e.target.value)}
+                  />
+                </div>
+                <button 
+                  onClick={saveKey}
+                  className="w-full bg-ink text-white py-4 rounded-2xl font-bold uppercase tracking-widest text-xs hover:bg-gold transition-all"
+                >
+                  Save Configuration
+                </button>
+                <button 
+                  onClick={() => {
+                    localStorage.removeItem('WANDERLUST_API_KEY');
+                    setTempKey('');
+                    window.location.reload();
+                  }}
+                  className="w-full text-gray-400 text-[10px] uppercase tracking-widest font-bold hover:text-red-500 transition-colors"
+                >
+                  Reset to Default
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
-    </nav>
+
+      <AnimatePresence>
+        {showDeployGuide && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center px-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowDeployGuide(false)}
+              className="absolute inset-0 bg-ink/80 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative bg-white w-full max-w-2xl rounded-[3rem] overflow-hidden shadow-2xl p-12"
+            >
+              <button 
+                onClick={() => setShowDeployGuide(false)}
+                className="absolute top-8 right-8 text-gray-400 hover:text-ink transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              <h2 className="text-4xl mb-6">Deployment <span className="italic font-light">Guide</span></h2>
+              <div className="prose prose-slate max-w-none text-sm leading-relaxed">
+                <p>To deploy this platform to <strong>Netlify</strong> via GitHub:</p>
+                <ol className="space-y-4">
+                  <li><strong>Push to GitHub:</strong> Upload these project files to a new GitHub repository.</li>
+                  <li><strong>Connect Netlify:</strong> In your Netlify dashboard, select "Import from GitHub" and choose your repo.</li>
+                  <li><strong>Configure API Keys:</strong> Go to Site Settings &gt; Environment Variables and add:
+                    <ul className="mt-2 space-y-1 font-mono text-xs bg-gray-50 p-3 rounded-lg border border-gray-100">
+                      <li>GEMINI_API_KEY = (Your Google AI Studio Key)</li>
+                      <li>VITE_STRIPE_PUBLISHABLE_KEY = (Your Stripe Key)</li>
+                    </ul>
+                  </li>
+                  <li><strong>Build Settings:</strong> Command: <code>npm run build</code> | Directory: <code>dist</code></li>
+                </ol>
+                <div className="mt-8 p-4 bg-gold/10 rounded-2xl border border-gold/20 flex items-start gap-3">
+                  <Sparkles className="w-5 h-5 text-gold shrink-0 mt-1" />
+                  <p className="text-xs text-ink/70 italic">Note: For full Stripe payment functionality, a server-capable host like Render or Railway is recommended, or use Netlify Functions.</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 
 const Hero = ({ onBookClick }: { onBookClick: () => void }) => {
   return (
     <section className="relative h-screen flex items-center justify-center overflow-hidden">
-      <div className="absolute inset-0 z-0">
+      <motion.div 
+        initial={{ scale: 1.1 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 1.5, ease: "easeOut" }}
+        className="absolute inset-0 z-0"
+      >
         <img 
-          src="https://picsum.photos/seed/travel-hero/1920/1080" 
+          src="https://picsum.photos/seed/travel-luxury-v2/1920/1080?blur=2" 
           alt="Luxury Travel" 
-          className="w-full h-full object-cover scale-105"
+          className="w-full h-full object-cover"
           referrerPolicy="no-referrer"
         />
-        <div className="absolute inset-0 bg-black/40" />
-      </div>
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" />
+      </motion.div>
 
-      <div className="relative z-10 text-center px-6 max-w-4xl">
+      <div className="relative z-10 text-center px-6 max-w-5xl">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 1, delay: 0.2 }}
         >
-          <span className="text-white/80 uppercase tracking-[0.3em] text-sm mb-4 block">Redefining the art of travel</span>
-          <h1 className="text-6xl md:text-8xl text-white mb-8 leading-[0.9]">
-            The World <br />
-            <span className="italic font-light">Awaits Your</span> <br />
-            Presence
+          <span className="text-gold uppercase tracking-[0.4em] text-xs mb-6 block font-bold">The Pinnacle of Bespoke Exploration</span>
+          <h1 className="text-7xl md:text-9xl text-white mb-10 leading-[0.85] font-display">
+            Crafting <br />
+            <span className="italic font-light">Timeless</span> <br />
+            Memories
           </h1>
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-            <button 
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={onBookClick}
-              className="bg-white text-ink px-10 py-4 rounded-full font-medium hover:bg-accent transition-colors flex items-center gap-2 group cursor-pointer"
+              className="bg-white text-ink px-12 py-5 rounded-full font-bold uppercase tracking-widest text-xs hover:bg-gold hover:text-white transition-all flex items-center gap-3 group cursor-pointer shadow-2xl"
             >
-              Book Your Escape <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-            <a 
+              Start Your Journey <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
+            </motion.button>
+            <motion.a 
+              whileHover={{ scale: 1.05 }}
               href="#destinations"
-              className="glass text-white px-10 py-4 rounded-full font-medium hover:bg-white/20 transition-colors inline-block"
+              className="glass text-white px-12 py-5 rounded-full font-bold uppercase tracking-widest text-xs hover:bg-white/20 transition-all inline-block shadow-xl"
             >
-              Explore Destinations
-            </a>
+              View Collections
+            </motion.a>
           </div>
         </motion.div>
       </div>
 
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce">
-        <div className="w-px h-12 bg-white/40" />
-      </div>
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.5 }}
+        className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4"
+      >
+        <span className="text-white/40 text-[10px] uppercase tracking-[0.3em]">Scroll to Explore</span>
+        <div className="w-px h-16 bg-gradient-to-b from-white/60 to-transparent" />
+      </motion.div>
     </section>
   );
 };
@@ -173,15 +315,22 @@ const AIPlanner = () => {
   const [interests, setInterests] = useState('culture and food');
   const [itinerary, setItinerary] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handlePlan = async () => {
     if (!destination) return;
     setLoading(true);
+    setError(null);
     try {
       const result = await getTravelItinerary(destination, duration, interests);
       setItinerary(result || null);
-    } catch (error) {
-      console.error(error);
+    } catch (err: any) {
+      console.error(err);
+      if (err.message === "MISSING_API_KEY") {
+        setError("Configuration Required: Please click the search/settings icon in the menu to add your API Key.");
+      } else {
+        setError("Our concierge is currently unavailable. Please check your connection or try again later.");
+      }
     } finally {
       setLoading(false);
     }
@@ -200,55 +349,70 @@ const AIPlanner = () => {
             Crafted by Intelligence
           </h2>
           
-          <div className="space-y-6 max-w-md">
-            <div className="space-y-2">
-              <label className="text-xs uppercase tracking-widest text-white/60">Where to?</label>
-              <input 
-                type="text" 
-                placeholder="e.g. Kyoto, Japan"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-white/30 transition-colors"
-                value={destination}
-                onChange={(e) => setDestination(e.target.value)}
-              />
+          <div className="space-y-8 max-w-md">
+            <div className="space-y-3">
+              <label className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-bold">Destination</label>
+              <div className="relative">
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gold" />
+                <input 
+                  type="text" 
+                  placeholder="Where does your heart lead?"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:border-gold/50 transition-all placeholder:text-white/20"
+                  value={destination}
+                  onChange={(e) => setDestination(e.target.value)}
+                />
+              </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-xs uppercase tracking-widest text-white/60">Duration</label>
-                <select 
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-white/30 transition-colors"
-                  value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
-                >
-                  <option className="bg-ink">3 days</option>
-                  <option className="bg-ink">5 days</option>
-                  <option className="bg-ink">1 week</option>
-                  <option className="bg-ink">2 weeks</option>
-                </select>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <label className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-bold">Duration</label>
+                <div className="relative">
+                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gold" />
+                  <select 
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:border-gold/50 transition-all appearance-none cursor-pointer"
+                    value={duration}
+                    onChange={(e) => setDuration(e.target.value)}
+                  >
+                    <option className="bg-ink">3 days</option>
+                    <option className="bg-ink">5 days</option>
+                    <option className="bg-ink">1 week</option>
+                    <option className="bg-ink">2 weeks</option>
+                  </select>
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-xs uppercase tracking-widest text-white/60">Focus</label>
-                <select 
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-white/30 transition-colors"
-                  value={interests}
-                  onChange={(e) => setInterests(e.target.value)}
-                >
-                  <option className="bg-ink">Culture & Food</option>
-                  <option className="bg-ink">Adventure</option>
-                  <option className="bg-ink">Relaxation</option>
-                  <option className="bg-ink">Photography</option>
-                </select>
+              <div className="space-y-3">
+                <label className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-bold">Focus</label>
+                <div className="relative">
+                  <Compass className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gold" />
+                  <select 
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:border-gold/50 transition-all appearance-none cursor-pointer"
+                    value={interests}
+                    onChange={(e) => setInterests(e.target.value)}
+                  >
+                    <option className="bg-ink">Culture & Food</option>
+                    <option className="bg-ink">Adventure</option>
+                    <option className="bg-ink">Relaxation</option>
+                    <option className="bg-ink">Photography</option>
+                  </select>
+                </div>
               </div>
             </div>
 
             <button 
               onClick={handlePlan}
               disabled={loading}
-              className="w-full bg-white text-ink py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-accent transition-colors disabled:opacity-50"
+              className="w-full bg-gold text-white py-5 rounded-2xl font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-white hover:text-ink transition-all disabled:opacity-50 shadow-xl"
             >
-              {loading ? <Sparkles className="animate-spin" /> : <Sparkles />}
-              {loading ? 'Crafting Itinerary...' : 'Generate My Trip'}
+              {loading ? <Sparkles className="animate-spin w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+              {loading ? 'Curating Your Experience...' : 'Generate Bespoke Itinerary'}
             </button>
+
+            {error && (
+              <p className="text-red-400 text-xs text-center mt-4 bg-red-400/10 py-3 px-4 rounded-xl border border-red-400/20">
+                {error}
+              </p>
+            )}
           </div>
         </div>
 
